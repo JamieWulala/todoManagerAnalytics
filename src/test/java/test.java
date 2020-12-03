@@ -4,7 +4,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.InputStream;
+import java.io.*;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +15,6 @@ public class test {
 
     protected Process proc;
 
-    @Before
     public void setup() {
         //Set base URI
         baseURI = "http://localhost:4567";
@@ -29,21 +29,51 @@ public class test {
         } catch (Exception e) {
             System.out.println(e.toString());
         }
+        System.out.println("started");
+    }
+
+    public void tearDown() throws InterruptedException {
+        proc.destroy();
+        System.out.println("destroyed");
+        Thread.sleep(400);
     }
 
     @Test
-    public void testAddTodo() throws InterruptedException {
-        String testCaseName = "addTodo";
+    public void testAddTodo2() throws InterruptedException, IOException {
+        int size = 100;
+        long T1startTime, uT1startTime;
+        long T1endTime, uT1endTime;
+        long T2startTime, uT2startTime;
+        long T2endTime, uT2endTime;
 
-        int size = 10000;
-        long startTime;
-        long endTime;
-        long elapsed;
+        String testCaseName = "addTodos";
+
+        File csv = new File("./output.csv");
+        if (csv.exists()){
+            csv.delete();
+            csv = new File("./output.csv");
+        }
+
+        BufferedWriter bw = new BufferedWriter(new FileWriter(csv, true));
+
         Map<String, String> requestBody = new HashMap();
         requestBody.put("title", "categoryTitle");
 
-        for (int i = 0; i < size ; i++){
-            startTime = System.currentTimeMillis();
+        for (int i = 1; i < size; i *=10) { //control base element
+            T1startTime = System.currentTimeMillis();
+            uT1startTime = Instant.now().getEpochSecond();
+            setup();
+            for (int j = 0; j < i; j++) {
+                given()
+                        .body(requestBody)
+                        .contentType("application/json").
+                when().
+                        post("/todos").
+                then().
+                        statusCode(201);
+            }//set up base element
+            T2startTime = System.currentTimeMillis();
+            uT2startTime =Instant.now().getEpochSecond();
             given()
                     .body(requestBody)
                     .contentType("application/json").
@@ -51,17 +81,20 @@ public class test {
                     post("/todos").
             then().
                     statusCode(201);
-            endTime = System.currentTimeMillis();
-            elapsed = endTime - startTime;
-            System.out.println(i+" Elapsed time is: "+elapsed+"ms");
+
+            T2endTime = System.currentTimeMillis();
+            uT2endTime = Instant.now().getEpochSecond();
+            tearDown();
+            T1endTime = System.currentTimeMillis();
+            uT1endTime =Instant.now().getEpochSecond();
+
+            String input = testCaseName+ ", "+i+", "+T1startTime+ ", "+T1endTime+ ", "+uT1startTime+ ", "+uT1endTime+ ", "+T2startTime+ ", "+T2endTime+ ", "+uT2startTime+ ", "+uT2endTime;
+            System.out.println(input);
+            bw.write(input);
+            bw.newLine();
+
         }
-        //Test code here
-
-
+        bw.close();
     }
 
-    @After
-    public void tearDown(){
-        //proc.destroy();
-    }
 }
