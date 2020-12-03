@@ -39,8 +39,7 @@ public class test {
     }
 
     @Test
-    public void testAddTodo2() throws InterruptedException, IOException {
-        int size = 100;
+    public void testAddTodo() throws InterruptedException, IOException {
         long T1startTime, uT1startTime;
         long T1endTime, uT1endTime;
         long T2startTime, uT2startTime;
@@ -59,11 +58,12 @@ public class test {
         Map<String, String> requestBody = new HashMap();
         requestBody.put("title", "categoryTitle");
 
-        for (int i = 1; i < size; i *=10) { //control base element
+        int size = 810;
+        for (int i = 10; i <= size; i *=3) { //control base element
             T1startTime = System.currentTimeMillis();
-            uT1startTime = Instant.now().getEpochSecond();
+            uT1startTime = Instant.now().getEpochSecond(); //T1 -> set up time
             setup();
-            for (int j = 0; j < i; j++) {
+            for (int j = 0; j < i; j++) { //set up base element to I
                 given()
                         .body(requestBody)
                         .contentType("application/json").
@@ -72,21 +72,26 @@ public class test {
                 then().
                         statusCode(201);
             }//set up base element
-            T2startTime = System.currentTimeMillis();
-            uT2startTime =Instant.now().getEpochSecond();
-            given()
-                    .body(requestBody)
-                    .contentType("application/json").
-            when().
-                    post("/todos").
-            then().
-                    statusCode(201);
 
+            T2startTime = System.currentTimeMillis(); //T2 -> one operation response
+            //request code
+            uT2startTime =Instant.now().getEpochSecond();
+            int statusCode =
+                given()
+                        .body(requestBody)
+                        .contentType("application/json").
+                when().
+                        post("/todos").
+                then().
+                        extract().
+                        statusCode();
+            //end request
             T2endTime = System.currentTimeMillis();
-            uT2endTime = Instant.now().getEpochSecond();
+            uT2endTime = Instant.now().getEpochSecond(); //T2end -> request time
             tearDown();
-            T1endTime = System.currentTimeMillis();
+            T1endTime = System.currentTimeMillis();//T1end -> after tear down
             uT1endTime =Instant.now().getEpochSecond();
+            assert (statusCode == 201);
 
             String input = testCaseName+ ", "+i+", "+T1startTime+ ", "+T1endTime+ ", "+uT1startTime+ ", "+uT1endTime+ ", "+T2startTime+ ", "+T2endTime+ ", "+uT2startTime+ ", "+uT2endTime;
             System.out.println(input);
